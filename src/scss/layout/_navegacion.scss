@@ -12,6 +12,7 @@
 .navegacion{
     @include tablet{
         display: flex;
+        align-items: center;
     }
     a{
         color: $blanco;
@@ -22,6 +23,7 @@
 
         @include tablet{
             margin-right: 2rem;
+            font-size: 1.8rem;
 
             &:last-of-type{
                 margin-right: 0;
