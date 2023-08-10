@@ -58,5 +58,8 @@
     </section>
 
     <?php
+
    incluirTemplate('footer');
     ?>
+
+
