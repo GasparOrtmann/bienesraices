@@ -4,8 +4,20 @@
 
     $db = conectarDB();
 
+    // COnsultar para obtener vendedores
+    $consulta = "SELECT * FROM vendedores";
+    $resultado = mysqli_query($db,$consulta);
+
     // Arreglo con mensaje de errores
     $errores = [];
+
+    $titulo="";
+    $precio="";
+    $descripcion="";
+    $habitaciones="";
+    $wc="";
+    $estacionamiento="";
+    $vendedorId="";
 
     // Ejecutar el codigo despues de que el usuario envia el form
 
@@ -14,13 +26,19 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     // var_dump($_POST);
     // echo "</pre>";
 
-    $titulo = $_POST['titulo'];
-    $precio = $_POST['precio'];
-    $descripcion = $_POST['descripcion'];
-    $habitaciones = $_POST['habitaciones'];
-    $wc = $_POST['wc'];
-    $estacionamiento = $_POST['estacionamiento'];
-    $vendedorId = $_POST['vendedor'];
+    $titulo = mysqli_real_escape_string ($db, $_POST['titulo']);
+    $precio = mysqli_real_escape_string ($db, $_POST['precio']);
+    $descripcion = mysqli_real_escape_string ($db, $_POST['descripcion']);
+    $habitaciones = mysqli_real_escape_string ($db, $_POST['habitaciones']);
+    $wc = mysqli_real_escape_string ($db, $_POST['wc']);
+    $estacionamiento = mysqli_real_escape_string ($db, $_POST['estacionamiento']);
+    $vendedorId = mysqli_real_escape_string ($db, $_POST['vendedor']);
+    $creado = date('Y/m/d');
+
+    // Asignar files hacia una variable
+    $imagen = $_FILES['imagen'];
+
+    
 
     if(!$titulo){
         $errores[] = "Debes añadir un titulo";
@@ -43,19 +61,47 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     if(!$vendedorId){
         $errores[] = "Debes elegir un vendedor";
     }
+    // if(!$imagen['name'] || $imagen['error']){
+    //     $errores[] = "La imagen es obligatoria";
+    // }
+
+    // Validar por tamaño (1mb max)
+
+    $medida = 1000 * 1000;
+
+    if($imagen['size'] > $medida){
+        $errores[] = "La imagen es muy pesada";
+    }
 
 
     //Revisar array
     if(empty($errores)){
+        // SUBIDA DE ARCHIVOS
+
+        // Crear folder
+        $folder = '../../imagenes/';
+
+        if(!is_dir($folder)){
+            mkdir($folder);
+        }
+       
+        //Generar un nombre unico
+        $nombreImg = md5(uniqid(rand(),true));
+
+        // Subir la imagen
+        move_uploaded_file($imagen['tmp_name'], $folder . $nombreImg . ".jpg");
+
         //Insertar
-        $query = "INSERT INTO propiedades (titulo,precio,descripcion,habitaciones,wc,estacionamiento,
-        vendedores_Id) VALUES ('$titulo','$precio','$descripcion','$habitaciones','$wc',
-        '$estacionamiento','$vendedorId')";
+        $query = "INSERT INTO propiedades (titulo,precio,imagen,descripcion,habitaciones,wc,estacionamiento, creado,
+        vendedores_Id) VALUES ('$titulo','$precio','$nombreImg','$descripcion','$habitaciones','$wc',
+        '$estacionamiento','$creado','$vendedorId')";
 
         $resultado = mysqli_query($db,$query);
 
         if($resultado){
-            echo "Insertado Correctamente";
+           //Redireccionar al usuario.
+
+           header('Location: /admin?resultado=1');
         }
     }
 
@@ -69,7 +115,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 <main class="contenedor seccion">
     <h1>Crear</h1>
 
-    <a href="/admin/index.php" class="boton boton-verde">Volver</a>
+    <a href="../admin/index.php" class="boton boton-verde">Volver</a>
 
     <?php foreach($errores as $error): ?>
         <div class="alerta error">
@@ -77,7 +123,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         </div>
     <?php endforeach; ?>
 
-    <form class="formulario" method="POST" action="/admin/propiedades/create.php">
+    <form class="formulario" method="POST" action="/admin/propiedades/create.php" enctype="multipart/form-data"> <!-- enctype permitira ver info de los archivos subidos -->
         <fieldset>
             <legend>Informacion General</legend>
 
@@ -88,7 +134,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
             <input type="number" id="precio" name="precio" placeholder="Precio Propiedad">
 
             <label for="imagen">Imagen:</label>
-            <input type="file" id="imagen" accept="image/jpeg, image/png">
+            <input type="file" id="imagen" accept="image/jpeg, image/png" name="imagen">
 
             <label for="descripcion">Descripcion:</label>
             <textarea id="descripcion" name="descripcion"></textarea>
@@ -112,8 +158,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
             <select name="vendedor">
                 <option value="" selected disabled>-- Seleccione --</option>
-                <option value="1">Gaspar</option>
-                <option value="2">Juana</option>
+                <?php while($vendedor = mysqli_fetch_assoc($resultado)) : ?>
+                    <option <?php echo $vendedorId == $vendedor['id'] ? 'selected' : ''; ?>
+                    value="<?php echo $vendedor['id'] ?>">
+                    <?php echo $vendedor['nombre'] . " " . $vendedor['apellido'] ?></option>
+                <?php endwhile; ?>
+                
             </select>
         </fieldset>
 
