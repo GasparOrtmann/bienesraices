@@ -7,12 +7,7 @@
 
     <link rel="stylesheet" href="/build/css/app.css">
 
-
-
-    <link rel="stylesheet" href="/build/css/app.css">
-
     <link rel="stylesheet" href="/bienesraices/build/css/app.css">
-
 
 </head>
 <body>
